@@ -29,6 +29,9 @@ jobs:
 
     timeout-minutes: 60
 
+    env:
+      HAS_STORE: ${{ secrets.STORE_BASE64 != '' }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +55,7 @@ jobs:
         run: ./gradlew check -p build-logic
 
       - name: Decode store file
-        if: ${{ secrets.STORE_BASE64 != '' }}
+        if: ${{ env.HAS_STORE == 'true' }}
         env:
             STORE_FILE: ${{ secrets.STORE_FILE }}
             ENCODED_STRING: ${{ secrets.STORE_BASE64 }}
