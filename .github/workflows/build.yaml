@@ -52,6 +52,7 @@ jobs:
         run: ./gradlew check -p build-logic
 
       - name: Decode store file
+        if: ${{ secrets.STORE_BASE64 != '' }}
         env:
             STORE_FILE: ${{ secrets.STORE_FILE }}
             ENCODED_STRING: ${{ secrets.STORE_BASE64 }}
@@ -69,6 +70,9 @@ jobs:
           BUILD_FOSS: ${{ github.event.inputs.Foss }}
         run: |
           TASKS=""
+          if [ -z "${STORE_FILE}" ]; then
+            TASKS="assembleDebug"
+          else
           if [ ${BUILD_ALPHA} = 'true' ]; then
             TASKS="$TASKS assembleArm64-v8aAlphaRelease assembleArmeabi-v7aAlphaRelease assembleX86AlphaRelease assembleX86_64AlphaRelease"
           fi
@@ -81,10 +85,11 @@ jobs:
           if [ -z ${TASKS} ]; then
             TASKS="assembleRelease"
           fi
+          fi
           ./gradlew $TASKS --daemon --parallel
 
       - name: Move APKs
-        run: mv ./*/build/outputs/apk/*/release/*.apk .
+        run: mv ./*/build/outputs/apk/*/*/*.apk .
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
