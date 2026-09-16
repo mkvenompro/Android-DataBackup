@@ -159,6 +159,12 @@
     <string name="add_directory">إضافة مجلد</string>
     <string name="add_media_file">إضافة صورة / فيديو / أغنية</string>
     <string name="add_wifi_networks">إضافة شبكات الواي فاي المحفوظة (روت)</string>
+    <string name="backup_media">نسخ الميديا</string>
+    <string name="media_images">صور</string>
+    <string name="media_videos">فيديوهات</string>
+    <string name="media_audio">أغاني</string>
+    <string name="media_scanning">جارٍ فحص الجهاز عن الميديا…</string>
+    <string name="media_empty">لا توجد ملفات</string>
     <string name="update_available">تحديث متوفر</string>
     <string name="installed">مثبت</string>
     <string name="delete">حذف</string>

@@ -9,7 +9,9 @@ import com.xayah.core.hiddenapi.castTo
 import com.xayah.core.model.CompressionType
 import com.xayah.core.model.DataType
 import com.xayah.core.model.File
+import com.xayah.core.model.MediaKind
 import com.xayah.core.model.OpType
+import com.xayah.core.model.ScannedMediaFile
 import com.xayah.core.model.database.LabelFileCrossRefEntity
 import com.xayah.core.model.database.MediaEntity
 import com.xayah.core.model.database.MediaExtraInfo
@@ -41,6 +43,19 @@ class FilesRepo @Inject constructor(
 ) {
     companion object {
         private const val TAG = "FilesRepo"
+
+        private val ImageExtensions = setOf(
+            "jpg", "jpeg", "png", "gif", "webp", "bmp",
+            "heic", "heif", "tif", "tiff", "svg", "avif", "dng"
+        )
+        private val VideoExtensions = setOf(
+            "mp4", "mkv", "avi", "mov", "wmv", "flv",
+            "webm", "3gp", "ts", "m2ts", "mpg", "mpeg", "m4v"
+        )
+        private val AudioExtensions = setOf(
+            "mp3", "wav", "flac", "aac", "ogg", "oga",
+            "m4a", "opus", "amr", "mid", "midi", "wma", "aiff"
+        )
     }
 
     private fun log(block: () -> String): String = block().also { LogUtil.log { TAG to it } }
@@ -345,6 +360,45 @@ class FilesRepo @Inject constructor(
         }
         filesDao.upsert(files)
         log { "Wi-Fi configs added: ${files.size}, already existed: $failure." }
+    }
+
+    /**
+     * Scan internal storage (root) for image/video/audio files.
+     * Each result keeps its absolute path, so backing it up and later
+     * restoring writes it back to the exact same location.
+     */
+    suspend fun scanMediaFiles(): List<ScannedMediaFile> {
+        val found = mutableListOf<ScannedMediaFile>()
+        val root = ConstantUtil.DEFAULT_PATH_PARENT
+        if (rootService.exists(root)) {
+            rootService.walkFileTree(root).forEach { parcelable ->
+                val path = parcelable.pathString
+                val name = PathUtil.getFileName(path)
+                if (name.isEmpty() || name.startsWith(".")) return@forEach
+                if ("/Android/" in path) return@forEach
+                val ext = name.substringAfterLast('.', "").lowercase()
+                val kind = when (ext) {
+                    in ImageExtensions -> MediaKind.Images
+                    in VideoExtensions -> MediaKind.Videos
+                    in AudioExtensions -> MediaKind.Audio
+                    else -> null
+                } ?: return@forEach
+                found.add(ScannedMediaFile(path = path, name = name, kind = kind))
+            }
+        }
+        log { "Media scan found ${found.size} files under $root." }
+        return found.sortedWith(compareBy({ it.kind.ordinal }, { it.name.lowercase() }))
+    }
+
+    /**
+     * Backup exactly [pathList]: deactivate any previously selected files
+     * first so the backup run contains only these items, then add them
+     * (activated) and let the caller navigate to the backup processing.
+     */
+    suspend fun prepareMediaBackup(pathList: List<String>) {
+        val existing = filesDao.query(opType = OpType.BACKUP, blocked = false)
+        if (existing.isNotEmpty()) filesDao.activateByIds(existing.map { it.id }, false)
+        addFiles(pathList)
     }
 
     suspend fun calculateLocalFileSize(file: MediaEntity) {

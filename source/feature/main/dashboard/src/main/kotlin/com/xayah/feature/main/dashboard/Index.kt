@@ -165,6 +165,17 @@ fun PageDashboard() {
                     ) {
                         navController.navigateSingle(MainRoutes.List.getRoute(target = Target.Files, opType = OpType.BACKUP))
                     }
+                    QuickActionsButton(
+                        modifier = Modifier.weight(1f),
+                        enabled = nullBackupDir.not(),
+                        title = stringResource(id = R.string.backup_media),
+                        icon = ImageVector.vectorResource(id = R.drawable.ic_rounded_acute),
+                        colorContainer = ThemedColorSchemeKeyTokens.GreenPrimaryContainer,
+                        colorL80D20 = ThemedColorSchemeKeyTokens.GreenL80D20,
+                        onColorContainer = ThemedColorSchemeKeyTokens.GreenOnPrimaryContainer
+                    ) {
+                        navController.navigateSingle(MainRoutes.MediaBackup.route)
+                    }
                     // TODO MMS/SMS, Contacts backup/restore
 //                    QuickActionsButton(
 //                        modifier = Modifier.weight(1f),
