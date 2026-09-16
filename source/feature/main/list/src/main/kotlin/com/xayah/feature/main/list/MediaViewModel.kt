@@ -94,6 +94,7 @@ sealed interface MediaUiState {
         val videos: List<ScannedMediaFile>,
         val audio: List<ScannedMediaFile>,
         val selected: Set<String>,
+        val idByPath: Map<String, Long> = mapOf(),
     ) : MediaUiState {
         val total: Int get() = images.size + videos.size + audio.size
     }

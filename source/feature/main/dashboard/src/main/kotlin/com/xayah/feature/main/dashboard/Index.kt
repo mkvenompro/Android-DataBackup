@@ -222,6 +222,18 @@ fun PageDashboard() {
                     QuickActionsButton(
                         modifier = Modifier.weight(1f),
                         enabled = nullBackupDir.not(),
+                        title = stringResource(id = R.string.restore_media),
+                        icon = ImageVector.vectorResource(id = R.drawable.ic_rounded_history),
+                        colorContainer = ThemedColorSchemeKeyTokens.BluePrimaryContainer,
+                        colorL80D20 = ThemedColorSchemeKeyTokens.BlueL80D20,
+                        onColorContainer = ThemedColorSchemeKeyTokens.BlueOnPrimaryContainer,
+                        actionIcon = Icons.Rounded.KeyboardArrowRight
+                    ) {
+                        navController.navigateSingle(MainRoutes.MediaRestore.route)
+                    }
+                    QuickActionsButton(
+                        modifier = Modifier.weight(1f),
+                        enabled = nullBackupDir.not(),
                         title = stringResource(R.string.history),
                         icon = Icons.Rounded.ListAlt,
                         colorContainer = ThemedColorSchemeKeyTokens.PinkPrimaryContainer,

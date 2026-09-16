@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,19 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,11 +34,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xayah.core.model.MediaKind
-import com.xayah.core.model.ScannedMediaFile
 import com.xayah.core.ui.component.Divider
 import com.xayah.core.ui.component.IconButton
 import com.xayah.core.ui.component.InnerTopSpacer
@@ -54,30 +46,30 @@ import com.xayah.core.ui.token.SizeTokens
 import com.xayah.core.ui.util.LocalNavController
 
 @Composable
-fun MediaRoute(
-    viewModel: MediaViewModel = hiltViewModel(),
+fun MediaRestoreRoute(
+    viewModel: MediaRestoreViewModel = hiltViewModel(),
 ) {
     val navController = LocalNavController.current!!
     val uiState: MediaUiState by viewModel.uiState.collectAsStateWithLifecycle()
-    MediaScreen(
+    MediaRestoreScreen(
         uiState = uiState,
         onToggle = viewModel::toggle,
         onSelectAll = viewModel::selectAll,
         onUnselectAll = viewModel::unselectAll,
-        onRescan = viewModel::scan,
-        onBackup = { viewModel.backupSelected(navController) },
+        onReload = viewModel::reload,
+        onRestore = { viewModel.restoreSelected(navController) },
     )
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-internal fun MediaScreen(
+internal fun MediaRestoreScreen(
     uiState: MediaUiState,
     onToggle: (String) -> Unit,
     onSelectAll: (MediaKind) -> Unit,
     onUnselectAll: (MediaKind) -> Unit,
-    onRescan: () -> Unit,
-    onBackup: () -> Unit,
+    onReload: () -> Unit,
+    onRestore: () -> Unit,
 ) {
     val selected = (uiState as? MediaUiState.Success)?.selected.orEmpty()
     val total = (uiState as? MediaUiState.Success)?.total ?: 0
@@ -87,11 +79,11 @@ internal fun MediaScreen(
         topBar = {
             SecondaryTopBar(
                 scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState()),
-                title = stringResource(id = R.string.backup_media),
+                title = stringResource(id = R.string.restore_media),
                 subtitle = if (uiState is MediaUiState.Success) "(${selected.size}/${total})" else null,
                 actions = {
                     IconButton(icon = Icons.Rounded.Refresh) {
-                        onRescan()
+                        onReload()
                     }
                 },
             )
@@ -100,7 +92,7 @@ internal fun MediaScreen(
         floatingActionButton = {
             AnimatedVisibility(visible = selected.isNotEmpty(), enter = scaleIn(), exit = scaleOut()) {
                 ExtendedFloatingActionButton(
-                    onClick = onBackup,
+                    onClick = onRestore,
                     icon = { Icon(Icons.Rounded.ChevronRight, null) },
                     text = { Text(text = stringResource(id = R.string._continue)) },
                 )
@@ -167,63 +159,4 @@ internal fun MediaScreen(
             }
         }
     }
-}
-
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
-@Composable
-internal fun MediaTabs(
-    imagesCount: Int,
-    videosCount: Int,
-    audioCount: Int,
-    selectedTab: Int,
-    onTabClick: (Int) -> Unit,
-) {
-    val titles = listOf(
-        "${stringResource(id = R.string.media_images)} (${imagesCount})",
-        "${stringResource(id = R.string.media_videos)} (${videosCount})",
-        "${stringResource(id = R.string.media_audio)} (${audioCount})",
-    )
-    PrimaryScrollableTabRow(
-        selectedTabIndex = selectedTab,
-        edgePadding = SizeTokens.Level0,
-        indicator = @Composable {
-            TabRowDefaults.PrimaryIndicator(
-                Modifier.tabIndicatorOffset(selectedTab, matchContentSize = true),
-                shape = CircleShape
-            )
-        },
-        divider = {
-            Divider(modifier = Modifier.fillMaxWidth())
-        }
-    ) {
-        titles.forEachIndexed { index, title ->
-            Tab(
-                selected = selectedTab == index,
-                onClick = { onTabClick(index) },
-                text = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            )
-        }
-    }
-}
-
-@Composable
-internal fun MediaRow(
-    item: ScannedMediaFile,
-    checked: Boolean,
-    onToggle: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle)
-            .padding(horizontal = SizeTokens.Level16, vertical = SizeTokens.Level8),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(checked = checked, onCheckedChange = { onToggle() })
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = item.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(text = item.path, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-    Divider(modifier = Modifier.fillMaxWidth())
 }

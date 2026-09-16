@@ -35,6 +35,7 @@
     <item name="media_audio" type="string" />
     <item name="media_scanning" type="string" />
     <item name="media_empty" type="string" />
+    <item name="restore_media" type="string" />
     <item name="labels" type="string" />
     <item name="local" type="string" />
     <item name="apps_which_have_backups" type="string" />

@@ -391,6 +391,27 @@ class FilesRepo @Inject constructor(
     }
 
     /**
+     * Classify a file path as image/video/audio by extension,
+     * or null if it is not a media file.
+     */
+    fun kindOfMedia(path: String): MediaKind? {
+        val name = PathUtil.getFileName(path)
+        if (name.isEmpty()) return null
+        return when (name.substringAfterLast('.', "").lowercase()) {
+            in ImageExtensions -> MediaKind.Images
+            in VideoExtensions -> MediaKind.Videos
+            in AudioExtensions -> MediaKind.Audio
+            else -> null
+        }
+    }
+
+    /**
+     * Locally backed-up files (RESTORE rows) for the media restore screen.
+     */
+    fun getLocalRestoreMedia(): Flow<List<MediaEntity>> =
+        filesDao.queryFilesFlow(opType = OpType.RESTORE, cloud = "", backupDir = context.localBackupSaveDir())
+
+    /**
      * Backup exactly [pathList]: deactivate any previously selected files
      * first so the backup run contains only these items, then add them
      * (activated) and let the caller navigate to the backup processing.

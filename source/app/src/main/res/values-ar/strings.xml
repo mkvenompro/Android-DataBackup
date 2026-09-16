@@ -165,6 +165,7 @@
     <string name="media_audio">أغاني</string>
     <string name="media_scanning">جارٍ فحص الجهاز عن الميديا…</string>
     <string name="media_empty">لا توجد ملفات</string>
+    <string name="restore_media">استعادة الميديا</string>
     <string name="update_available">تحديث متوفر</string>
     <string name="installed">مثبت</string>
     <string name="delete">حذف</string>
