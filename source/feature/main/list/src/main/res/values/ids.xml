@@ -25,6 +25,10 @@
     <item name="_continue" type="string" />
     <item name="add" type="string" />
     <item name="select_target_directory" type="string" />
+    <item name="select_target_file" type="string" />
+    <item name="add_directory" type="string" />
+    <item name="add_media_file" type="string" />
+    <item name="add_wifi_networks" type="string" />
     <item name="labels" type="string" />
     <item name="local" type="string" />
     <item name="apps_which_have_backups" type="string" />

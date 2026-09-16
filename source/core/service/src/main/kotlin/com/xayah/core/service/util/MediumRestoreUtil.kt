@@ -74,6 +74,10 @@ class MediumRestoreUtil @Inject constructor(
             val sizeBytes = rootService.calculateSize(src)
             t.updateInfo(state = OperationState.PROCESSING, bytes = sizeBytes)
 
+            // Recreate the original parent dir (covers user-created folders
+            // that were deleted after backup, e.g. /sdcard/MyFolder/video.mp4).
+            rootService.mkdirs(dstDir)
+
             // Decompress the archive.
             Tar.decompress(
                 exclusionList = listOf(),
@@ -85,6 +89,9 @@ class MediumRestoreUtil @Inject constructor(
             ).also { result ->
                 isSuccess = result.isSuccess
                 out.addAll(result.out)
+            }
+            if (isSuccess && m.name.startsWith("WiFi-")) {
+                out.add(log { "Wi-Fi config restored to $dst. Reboot the device for it to take effect." })
             }
         } else {
             isSuccess = false

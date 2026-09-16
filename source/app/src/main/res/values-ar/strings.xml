@@ -155,6 +155,10 @@
     <string name="confirm_delete">هذا سيحذف كل الملفات التي تم اختيارها</string>
     <string name="custom_storage">مساحة تخزين مخصصة</string>
     <string name="select_target_directory">اختيار الملف المراد</string>
+    <string name="select_target_file">اختر ملف (صورة / فيديو / أغنية)</string>
+    <string name="add_directory">إضافة مجلد</string>
+    <string name="add_media_file">إضافة صورة / فيديو / أغنية</string>
+    <string name="add_wifi_networks">إضافة شبكات الواي فاي المحفوظة (روت)</string>
     <string name="update_available">تحديث متوفر</string>
     <string name="installed">مثبت</string>
     <string name="delete">حذف</string>

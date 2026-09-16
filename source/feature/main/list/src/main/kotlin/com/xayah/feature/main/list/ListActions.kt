@@ -93,7 +93,10 @@ internal fun ListActions(
 
                     Target.Files -> {
                         if (uiState.opType == OpType.BACKUP) {
-                            AddItem(enabled = uiState.isUpdating.not()) {
+                            AddItem(
+                                enabled = uiState.isUpdating.not(),
+                                text = context.getString(R.string.add_directory),
+                            ) {
                                 moreExpanded = false
                                 PickYouLauncher(
                                     checkPermission = true,
@@ -102,9 +105,32 @@ internal fun ListActions(
                                     permissionType = PermissionType.ROOT,
                                 ).apply {
                                     launch(context) {
-                                        viewModel.addFiles(listOf(it))
+                                        if (it.isNotEmpty()) viewModel.addFiles(listOf(it))
                                     }
                                 }
+                            }
+                            AddItem(
+                                enabled = uiState.isUpdating.not(),
+                                text = context.getString(R.string.add_media_file),
+                            ) {
+                                moreExpanded = false
+                                PickYouLauncher(
+                                    checkPermission = true,
+                                    title = context.getString(R.string.select_target_file),
+                                    pickerType = PickerType.FILE,
+                                    permissionType = PermissionType.ROOT,
+                                ).apply {
+                                    launch(context) {
+                                        if (it.isNotEmpty()) viewModel.addFiles(listOf(it))
+                                    }
+                                }
+                            }
+                            AddItem(
+                                enabled = uiState.isUpdating.not(),
+                                text = context.getString(R.string.add_wifi_networks),
+                            ) {
+                                moreExpanded = false
+                                viewModel.addWifiConfigs()
                             }
                         }
                     }
@@ -350,9 +376,9 @@ private fun RefreshItem(enabled: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AddItem(enabled: Boolean, onClick: () -> Unit) {
+private fun AddItem(enabled: Boolean, text: String = stringResource(id = R.string.add), onClick: () -> Unit) {
     DropdownMenuItem(
-        text = stringResource(id = R.string.add),
+        text = text,
         leadingIcon = Icons.Rounded.Add,
         onClick = onClick,
         enabled = enabled,

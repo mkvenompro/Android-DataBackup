@@ -241,6 +241,12 @@ class FilesRepo @Inject constructor(
         var failure = 0
         pathList.forEach { pathString ->
             if (pathString.isNotEmpty()) {
+                // Prevent adding the backup dir itself (would cause recursion).
+                if (pathString == context.localBackupSaveDir()) {
+                    failure++
+                    log { "$pathString is backup dir, skip." }
+                    return@forEach
+                }
                 var name = PathUtil.getFileName(pathString)
                 filesDao.query(opType = OpType.BACKUP, preserveId = 0, cloud = "", backupDir = "").forEach {
                     if (it.name == name && it.path != pathString) name = renameDuplicateFile(name)
@@ -279,6 +285,66 @@ class FilesRepo @Inject constructor(
             }
         }
         filesDao.upsert(files)
+    }
+
+    /**
+     * Probe all [ConstantUtil.KnownWifiConfigs] paths (requires root) and
+     * return the ones that exist on this device as name-to-path pairs.
+     */
+    suspend fun scanWifiConfigs(): List<Pair<String, String>> {
+        val found = mutableListOf<Pair<String, String>>()
+        ConstantUtil.KnownWifiConfigs.forEach { (name, path) ->
+            if (rootService.exists(path)) found.add(name to path)
+        }
+        return found
+    }
+
+    /**
+     * Add the on-device saved Wi-Fi configs as backup items.
+     * Each item keeps its original absolute path, so restoring writes it
+     * back where it was (needs reboot to take effect).
+     * NOTE: these files contain plaintext passwords, keep the backup safe.
+     */
+    suspend fun addWifiConfigs() {
+        val found = scanWifiConfigs()
+        if (found.isEmpty()) {
+            log { "No saved Wi-Fi configs found (root required)." }
+            return
+        }
+        val files = mutableListOf<MediaEntity>()
+        var failure = 0
+        found.forEach { (name, path) ->
+            val exists = filesDao.query(opType = OpType.BACKUP, preserveId = 0, name = name, cloud = "", backupDir = "") != null
+            if (exists) {
+                failure++
+                log { "$name:${path} has already existed." }
+            } else files.add(
+                MediaEntity(
+                    id = 0,
+                    indexInfo = MediaIndexInfo(
+                        opType = OpType.BACKUP,
+                        name = name,
+                        compressionType = CompressionType.TAR,
+                        preserveId = 0,
+                        cloud = "",
+                        backupDir = ""
+                    ),
+                    mediaInfo = MediaInfo(
+                        path = path,
+                        dataBytes = 0,
+                        displayBytes = 0,
+                    ),
+                    extraInfo = MediaExtraInfo(
+                        lastBackupTime = 0,
+                        activated = true,
+                        blocked = false,
+                        existed = true
+                    ),
+                )
+            )
+        }
+        filesDao.upsert(files)
+        log { "Wi-Fi configs added: ${files.size}, already existed: $failure." }
     }
 
     suspend fun calculateLocalFileSize(file: MediaEntity) {

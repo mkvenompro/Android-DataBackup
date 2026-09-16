@@ -225,6 +225,12 @@ class ListActionsViewModel @Inject constructor(
             filesRepo.addFiles(pathList)
         }
     }
+
+    fun addWifiConfigs() {
+        viewModelScope.launchOnDefault {
+            filesRepo.addWifiConfigs()
+        }
+    }
 }
 
 sealed interface ListActionsUiState {
