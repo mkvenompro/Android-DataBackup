@@ -12,12 +12,17 @@ private fun Project.configureCommon() {
     pluginManager.apply("org.jetbrains.kotlin.android")
 
     extensions.getByType<ApplicationExtension>().apply {
-        signingConfigs {
-            create("release") {
-                storeFile = file(System.getenv("STORE_FILE") ?: "placeholder")
-                storePassword = System.getenv("STORE_PASSWORD") ?: ""
-                keyAlias = System.getenv("KEY_ALIAS") ?: ""
-                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        // Release signing is optional: forks without signing secrets
+        // (STORE_FILE) build unsigned/debug APKs instead of failing.
+        val storeFileName = System.getenv("STORE_FILE").orEmpty()
+        if (storeFileName.isNotBlank()) {
+            signingConfigs {
+                create("release") {
+                    storeFile = file(storeFileName)
+                    storePassword = System.getenv("STORE_PASSWORD") ?: ""
+                    keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                    keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+                }
             }
         }
 
@@ -27,7 +32,7 @@ private fun Project.configureCommon() {
                 isShrinkResources = true
                 proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
                 buildConfigField("Boolean", "ENABLE_VERBOSE", "false")
-                signingConfig = signingConfigs.getByName("release")
+                signingConfigs.findByName("release")?.let { signingConfig = it }
             }
             debug {
                 isMinifyEnabled = false
