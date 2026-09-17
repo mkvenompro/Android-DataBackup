@@ -36,6 +36,10 @@
     <item name="media_scanning" type="string" />
     <item name="media_empty" type="string" />
     <item name="restore_media" type="string" />
+    <item name="backup_wifi" type="string" />
+    <item name="restore_wifi" type="string" />
+    <item name="wifi_scanning" type="string" />
+    <item name="wifi_empty" type="string" />
     <item name="labels" type="string" />
     <item name="local" type="string" />
     <item name="apps_which_have_backups" type="string" />

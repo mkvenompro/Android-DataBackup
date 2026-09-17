@@ -30,7 +30,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import java.io.File
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class FilesRepo @Inject constructor(
@@ -294,6 +294,27 @@ class FilesRepo @Inject constructor(
         }
         filesDao.upsert(files)
     }
+
+    /**
+     * Probe all [ConstantUtil.KnownWifiConfigs] paths (requires root) and
+     * return the ones that exist on this device as name-to-path pairs.
+     */
+    suspend fun scanWifiConfigs(): List<Pair<String, String>> {
+        val found = mutableListOf<Pair<String, String>>()
+        ConstantUtil.KnownWifiConfigs.forEach { (name, path) ->
+            if (rootService.exists(path)) found.add(name to path)
+        }
+        log { "Wi-Fi scan found ${found.size} configs." }
+        return found
+    }
+
+    /**
+     * Locally backed-up Wi-Fi configs (RESTORE rows named "WiFi-*").
+     */
+    fun getLocalRestoreWifi(): Flow<List<MediaEntity>> =
+        filesDao.queryFilesFlow(opType = OpType.RESTORE, cloud = "", backupDir = context.localBackupSaveDir())
+            .map { list -> list.filter { it.name.startsWith("WiFi-") } }
+            .flowOn(defaultDispatcher)
 
     /**
      * Scan internal storage (root) for image/video/audio files.

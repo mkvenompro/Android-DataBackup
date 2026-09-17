@@ -48,6 +48,21 @@ object ConstantUtil {
         "m4a", "opus", "amr", "mid", "midi", "wma", "aiff"
     )
 
+    /**
+     * Saved Wi-Fi network configs (require root).
+     * Paths vary by Android version, so all known locations are probed
+     * and only the ones that exist on the device are added.
+     * Display name to absolute path.
+     */
+    val KnownWifiConfigs = listOf(
+        "WiFi-WifiConfigStore" to "/data/misc/apexdata/com.android.wifi/WifiConfigStore.xml",
+        "WiFi-WifiConfigStoreSoftAp" to "/data/misc/apexdata/com.android.wifi/WifiConfigStoreSoftAp.xml",
+        "WiFi-WifiConfigStore-legacy" to "/data/misc/wifi/WifiConfigStore.xml",
+        "WiFi-WifiConfigStoreSoftAp-legacy" to "/data/misc/wifi/WifiConfigStoreSoftAp.xml",
+        "WiFi-wpa_supplicant" to "/data/misc/wifi/wpa_supplicant.conf",
+        "WiFi-p2p_supplicant" to "/data/misc/wifi/p2p_supplicant.conf",
+    )
+
     const val DOC_LINK = "https://DataBackupOfficial.github.io"
     const val GITHUB_LINK = "https://github.com/XayahSuSuSu/Android-DataBackup"
     const val CHAT_LINK = "https://t.me/databackupchat"
