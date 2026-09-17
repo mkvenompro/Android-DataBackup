@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,18 +13,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -33,16 +40,23 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import java.io.File
 import com.xayah.core.model.MediaKind
 import com.xayah.core.model.ScannedMediaFile
 import com.xayah.core.ui.component.Divider
@@ -66,6 +80,8 @@ fun MediaRoute(
         onUnselectAll = viewModel::unselectAll,
         onRescan = viewModel::scan,
         onBackup = { viewModel.backupSelected(navController) },
+        onLoadThumbnail = viewModel::loadThumbnail,
+        onLoadThumbnail = viewModel::loadThumbnail,
     )
 }
 
@@ -78,6 +94,7 @@ internal fun MediaScreen(
     onUnselectAll: (MediaKind) -> Unit,
     onRescan: () -> Unit,
     onBackup: () -> Unit,
+    onLoadThumbnail: suspend (String) -> String?,
 ) {
     val selected = (uiState as? MediaUiState.Success)?.selected.orEmpty()
     val total = (uiState as? MediaUiState.Success)?.total ?: 0
@@ -156,9 +173,14 @@ internal fun MediaScreen(
                         state = rememberLazyListState(),
                     ) {
                         items(items, key = { it.path }) { item ->
+                            var thumbPath by remember(item.path) { mutableStateOf<String?>(null) }
+                            LaunchedEffect(item.path) {
+                                thumbPath = onLoadThumbnail(item.path)
+                            }
                             MediaRow(
                                 item = item,
                                 checked = selected.contains(item.path),
+                                thumbnail = thumbPath,
                                 onToggle = { onToggle(item.path) },
                             )
                         }
@@ -210,6 +232,7 @@ internal fun MediaTabs(
 internal fun MediaRow(
     item: ScannedMediaFile,
     checked: Boolean,
+    thumbnail: String?,
     onToggle: () -> Unit,
 ) {
     Row(
@@ -219,6 +242,7 @@ internal fun MediaRow(
             .padding(horizontal = SizeTokens.Level16, vertical = SizeTokens.Level8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        MediaThumbnail(kind = item.kind, thumbnail = thumbnail)
         Checkbox(checked = checked, onCheckedChange = { onToggle() })
         Column(modifier = Modifier.weight(1f)) {
             Text(text = item.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -226,4 +250,38 @@ internal fun MediaRow(
         }
     }
     Divider(modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun MediaThumbnail(kind: MediaKind, thumbnail: String?) {
+    val shape = RoundedCornerShape(12.dp)
+    var failed by remember(thumbnail) { mutableStateOf(false) }
+    if (thumbnail == null || failed) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = when (kind) {
+                    MediaKind.Images -> Icons.Rounded.Image
+                    MediaKind.Videos -> Icons.Rounded.Movie
+                    MediaKind.Audio -> Icons.Rounded.MusicNote
+                },
+                contentDescription = null,
+            )
+        }
+    } else {
+        AsyncImage(
+            model = File(thumbnail),
+            contentDescription = null,
+            modifier = Modifier
+                .size(56.dp)
+                .clip(shape),
+            contentScale = ContentScale.Crop,
+            onError = { failed = true },
+        )
+    }
 }

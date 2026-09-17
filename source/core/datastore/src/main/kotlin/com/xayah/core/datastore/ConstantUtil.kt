@@ -27,24 +27,25 @@ object ConstantUtil {
     val DefaultMediaList = listOf(
         "Pictures" to "${DEFAULT_PATH_PARENT}/Pictures",
         "Music" to "${DEFAULT_PATH_PARENT}/Music",
-        "Movies" to "${DEFAULT_PATH_PARENT}/Movies",
         "DCIM" to "${DEFAULT_PATH_PARENT}/DCIM",
         "Download" to "${DEFAULT_PATH_PARENT}/Download",
     )
 
     /**
-     * Saved Wi-Fi network configs (require root).
-     * Paths vary by Android version, so all known locations are probed
-     * and only the ones that exist on the device are added.
-     * Display name to absolute path.
+     * Media file extensions (lowercase, without dot) shared by the
+     * storage scanner and the thumbnail generator.
      */
-    val KnownWifiConfigs = listOf(
-        "WiFi-WifiConfigStore" to "/data/misc/apexdata/com.android.wifi/WifiConfigStore.xml",
-        "WiFi-WifiConfigStoreSoftAp" to "/data/misc/apexdata/com.android.wifi/WifiConfigStoreSoftAp.xml",
-        "WiFi-WifiConfigStore-legacy" to "/data/misc/wifi/WifiConfigStore.xml",
-        "WiFi-WifiConfigStoreSoftAp-legacy" to "/data/misc/wifi/WifiConfigStoreSoftAp.xml",
-        "WiFi-wpa_supplicant" to "/data/misc/wifi/wpa_supplicant.conf",
-        "WiFi-p2p_supplicant" to "/data/misc/wifi/p2p_supplicant.conf",
+    val MediaImageExtensions = setOf(
+        "jpg", "jpeg", "png", "gif", "webp", "bmp",
+        "heic", "heif", "tif", "tiff", "svg", "avif", "dng"
+    )
+    val MediaVideoExtensions = setOf(
+        "mp4", "mkv", "avi", "mov", "wmv", "flv",
+        "webm", "3gp", "ts", "m2ts", "mpg", "mpeg", "m4v"
+    )
+    val MediaAudioExtensions = setOf(
+        "mp3", "wav", "flac", "aac", "ogg", "oga",
+        "m4a", "opus", "amr", "mid", "midi", "wma", "aiff"
     )
 
     const val DOC_LINK = "https://DataBackupOfficial.github.io"

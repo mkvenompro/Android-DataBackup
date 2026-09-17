@@ -76,7 +76,7 @@ class MediaViewModel @Inject constructor(
 
     fun backupSelected(navController: NavController) {
         viewModelScope.launchOnDefault {
-            val selected = (_uiState.value as? MediaUiState.Success)?.selected?.toList().orEmpty()
+            val selected = (uiState.value as? MediaUiState.Success)?.selected?.toList().orEmpty()
             if (selected.isNotEmpty()) {
                 filesRepo.prepareMediaBackup(selected)
                 withContext(Dispatchers.Main) {
@@ -85,6 +85,9 @@ class MediaViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun loadThumbnail(path: String): String? =
+        runCatching { filesRepo.getMediaThumbnail(path) }.getOrNull()
 }
 
 sealed interface MediaUiState {

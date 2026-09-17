@@ -107,4 +107,7 @@ class MediaRestoreViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun loadThumbnail(path: String): String? =
+        runCatching { filesRepo.getMediaThumbnail(path) }.getOrNull()
 }

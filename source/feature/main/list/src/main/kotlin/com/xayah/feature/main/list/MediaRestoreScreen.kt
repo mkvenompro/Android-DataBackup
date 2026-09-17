@@ -27,8 +27,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,6 +60,7 @@ fun MediaRestoreRoute(
         onUnselectAll = viewModel::unselectAll,
         onReload = viewModel::reload,
         onRestore = { viewModel.restoreSelected(navController) },
+        onLoadThumbnail = viewModel::loadThumbnail,
     )
 }
 
@@ -70,6 +73,7 @@ internal fun MediaRestoreScreen(
     onUnselectAll: (MediaKind) -> Unit,
     onReload: () -> Unit,
     onRestore: () -> Unit,
+    onLoadThumbnail: suspend (String) -> String?,
 ) {
     val selected = (uiState as? MediaUiState.Success)?.selected.orEmpty()
     val total = (uiState as? MediaUiState.Success)?.total ?: 0
@@ -148,9 +152,14 @@ internal fun MediaRestoreScreen(
                         state = rememberLazyListState(),
                     ) {
                         items(items, key = { it.path }) { item ->
+                            var thumbPath by remember(item.path) { mutableStateOf<String?>(null) }
+                            LaunchedEffect(item.path) {
+                                thumbPath = onLoadThumbnail(item.path)
+                            }
                             MediaRow(
                                 item = item,
                                 checked = selected.contains(item.path),
+                                thumbnail = thumbPath,
                                 onToggle = { onToggle(item.path) },
                             )
                         }

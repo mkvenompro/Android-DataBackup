@@ -93,10 +93,7 @@ internal fun ListActions(
 
                     Target.Files -> {
                         if (uiState.opType == OpType.BACKUP) {
-                            AddItem(
-                                enabled = uiState.isUpdating.not(),
-                                text = context.getString(R.string.add_directory),
-                            ) {
+                            AddItem(enabled = uiState.isUpdating.not()) {
                                 moreExpanded = false
                                 PickYouLauncher(
                                     checkPermission = true,
@@ -105,32 +102,9 @@ internal fun ListActions(
                                     permissionType = PermissionType.ROOT,
                                 ).apply {
                                     launch(context) {
-                                        if (it.isNotEmpty()) viewModel.addFiles(listOf(it))
+                                        viewModel.addFiles(listOf(it))
                                     }
                                 }
-                            }
-                            AddItem(
-                                enabled = uiState.isUpdating.not(),
-                                text = context.getString(R.string.add_media_file),
-                            ) {
-                                moreExpanded = false
-                                PickYouLauncher(
-                                    checkPermission = true,
-                                    title = context.getString(R.string.select_target_file),
-                                    pickerType = PickerType.FILE,
-                                    permissionType = PermissionType.ROOT,
-                                ).apply {
-                                    launch(context) {
-                                        if (it.isNotEmpty()) viewModel.addFiles(listOf(it))
-                                    }
-                                }
-                            }
-                            AddItem(
-                                enabled = uiState.isUpdating.not(),
-                                text = context.getString(R.string.add_wifi_networks),
-                            ) {
-                                moreExpanded = false
-                                viewModel.addWifiConfigs()
                             }
                         }
                     }

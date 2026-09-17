@@ -30,6 +30,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import java.io.File
 import javax.inject.Inject
 
 class FilesRepo @Inject constructor(
@@ -43,19 +44,11 @@ class FilesRepo @Inject constructor(
 ) {
     companion object {
         private const val TAG = "FilesRepo"
+        private const val THUMBNAIL_SIZE = 256
 
-        private val ImageExtensions = setOf(
-            "jpg", "jpeg", "png", "gif", "webp", "bmp",
-            "heic", "heif", "tif", "tiff", "svg", "avif", "dng"
-        )
-        private val VideoExtensions = setOf(
-            "mp4", "mkv", "avi", "mov", "wmv", "flv",
-            "webm", "3gp", "ts", "m2ts", "mpg", "mpeg", "m4v"
-        )
-        private val AudioExtensions = setOf(
-            "mp3", "wav", "flac", "aac", "ogg", "oga",
-            "m4a", "opus", "amr", "mid", "midi", "wma", "aiff"
-        )
+        private val ImageExtensions = ConstantUtil.MediaImageExtensions
+        private val VideoExtensions = ConstantUtil.MediaVideoExtensions
+        private val AudioExtensions = ConstantUtil.MediaAudioExtensions
     }
 
     private fun log(block: () -> String): String = block().also { LogUtil.log { TAG to it } }
@@ -303,66 +296,6 @@ class FilesRepo @Inject constructor(
     }
 
     /**
-     * Probe all [ConstantUtil.KnownWifiConfigs] paths (requires root) and
-     * return the ones that exist on this device as name-to-path pairs.
-     */
-    suspend fun scanWifiConfigs(): List<Pair<String, String>> {
-        val found = mutableListOf<Pair<String, String>>()
-        ConstantUtil.KnownWifiConfigs.forEach { (name, path) ->
-            if (rootService.exists(path)) found.add(name to path)
-        }
-        return found
-    }
-
-    /**
-     * Add the on-device saved Wi-Fi configs as backup items.
-     * Each item keeps its original absolute path, so restoring writes it
-     * back where it was (needs reboot to take effect).
-     * NOTE: these files contain plaintext passwords, keep the backup safe.
-     */
-    suspend fun addWifiConfigs() {
-        val found = scanWifiConfigs()
-        if (found.isEmpty()) {
-            log { "No saved Wi-Fi configs found (root required)." }
-            return
-        }
-        val files = mutableListOf<MediaEntity>()
-        var failure = 0
-        found.forEach { (name, path) ->
-            val exists = filesDao.query(opType = OpType.BACKUP, preserveId = 0, name = name, cloud = "", backupDir = "") != null
-            if (exists) {
-                failure++
-                log { "$name:${path} has already existed." }
-            } else files.add(
-                MediaEntity(
-                    id = 0,
-                    indexInfo = MediaIndexInfo(
-                        opType = OpType.BACKUP,
-                        name = name,
-                        compressionType = CompressionType.TAR,
-                        preserveId = 0,
-                        cloud = "",
-                        backupDir = ""
-                    ),
-                    mediaInfo = MediaInfo(
-                        path = path,
-                        dataBytes = 0,
-                        displayBytes = 0,
-                    ),
-                    extraInfo = MediaExtraInfo(
-                        lastBackupTime = 0,
-                        activated = true,
-                        blocked = false,
-                        existed = true
-                    ),
-                )
-            )
-        }
-        filesDao.upsert(files)
-        log { "Wi-Fi configs added: ${files.size}, already existed: $failure." }
-    }
-
-    /**
      * Scan internal storage (root) for image/video/audio files.
      * Each result keeps its absolute path, so backing it up and later
      * restoring writes it back to the exact same location.
@@ -410,6 +343,22 @@ class FilesRepo @Inject constructor(
      */
     fun getLocalRestoreMedia(): Flow<List<MediaEntity>> =
         filesDao.queryFilesFlow(opType = OpType.RESTORE, cloud = "", backupDir = context.localBackupSaveDir())
+
+    /**
+     * Return a cached thumbnail (JPEG) for a media file, generating it
+     * via root on first use (the app process cannot read storage directly).
+     * Returns null when no thumbnail could be produced (caller shows an icon).
+     */
+    suspend fun getMediaThumbnail(path: String): String? {
+        if (kindOfMedia(path) == null) return null
+        val cacheFile = File(File(context.cacheDir, "media_thumbs"), "${path.hashCode()}.jpg")
+        if (cacheFile.exists()) return cacheFile.absolutePath
+        return runCatching {
+            cacheFile.parentFile?.mkdirs()
+            val generated = rootService.generateMediaThumbnail(path, cacheFile.absolutePath, THUMBNAIL_SIZE)
+            if (generated.isNotEmpty() && cacheFile.exists()) cacheFile.absolutePath else null
+        }.getOrNull()
+    }
 
     /**
      * Backup exactly [pathList]: deactivate any previously selected files
