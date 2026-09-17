@@ -372,7 +372,7 @@ class FilesRepo @Inject constructor(
      */
     suspend fun getMediaThumbnail(path: String): String? {
         if (kindOfMedia(path) == null) return null
-        val cacheFile = File(File(context.cacheDir, "media_thumbs"), "${path.hashCode()}.jpg")
+        val cacheFile = java.io.File(java.io.File(context.cacheDir, "media_thumbs"), "${path.hashCode()}.jpg")
         if (cacheFile.exists()) return cacheFile.absolutePath
         return runCatching {
             cacheFile.parentFile?.mkdirs()
