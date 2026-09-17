@@ -81,7 +81,6 @@ fun MediaRoute(
         onRescan = viewModel::scan,
         onBackup = { viewModel.backupSelected(navController) },
         onLoadThumbnail = viewModel::loadThumbnail,
-        onLoadThumbnail = viewModel::loadThumbnail,
     )
 }
 
